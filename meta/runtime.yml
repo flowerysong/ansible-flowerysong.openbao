@@ -18,6 +18,8 @@ action_groups:
   - flowerysong.openbao.ldap_group
   - flowerysong.openbao.ldap_user
   - flowerysong.openbao.list
+  - flowerysong.openbao.namespace
+  - flowerysong.openbao.namespace_info
   - flowerysong.openbao.policy
   - flowerysong.openbao.policy_info
   - flowerysong.openbao.read

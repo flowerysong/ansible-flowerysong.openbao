@@ -13,6 +13,10 @@ options:
       - Location of the OpenBao service.
     type: str
     default: https://localhost:8200
+  namespace:
+    description:
+      - OpenBao namespace to operate within. If not specified, operations are performed in the root namespace.
+    type: str
   http_agent:
     description:
       - Header to identify as, generally appears in web server logs.

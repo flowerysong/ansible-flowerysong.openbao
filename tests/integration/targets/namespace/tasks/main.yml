@@ -1,0 +1,159 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Pretend to create a namespace
+      flowerysong.openbao.namespace:
+        path: subsumed
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Create a namespace
+      flowerysong.openbao.namespace:
+        path: subsumed
+      loop: [0, 1]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is not changed
+
+    - name: Pretend to delete the namespace
+      flowerysong.openbao.namespace:
+        path: subsumed
+        state: absent
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Fetch current namespaces
+      flowerysong.openbao.namespace_info:
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - "'subsumed/' in result.namespaces"
+
+    - name: Pretend to modify the namespace
+      flowerysong.openbao.namespace:
+        path: subsumed
+        custom_metadata:
+          foo: bar
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Modify the namespace
+      flowerysong.openbao.namespace:
+        path: subsumed
+        custom_metadata:
+          foo: bar
+          bar: baz
+      loop: [0, 1]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is not changed
+
+    - name: Modify the namespace again
+      flowerysong.openbao.namespace:
+        path: subsumed
+        custom_metadata:
+          foo: baz
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Fetch current namespaces
+      flowerysong.openbao.namespace_info:
+      register: result
+
+    - assert:
+        that:
+          - "result.namespaces['subsumed/'].custom_metadata == {'foo': 'baz'}"
+
+    - name: Create a KV mount in the namespace
+      flowerysong.openbao.engine:
+        namespace: subsumed
+        path: secret
+        type: kv
+        options:
+          version: 1
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Create a secret
+      flowerysong.openbao.kv:
+        namespace: subsumed
+        key: ping
+        value:
+          value: pong
+      loop: [0, 1]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is not changed
+          - "lookup('flowerysong.openbao.kv', 'ping', namespace='subsumed', **openbao_conf) == {'value': 'pong'}"
+
+    - name: Attempt to create a secret outside the namespace
+      flowerysong.openbao.kv:
+        key: ping
+        value:
+          value: pingu
+      ignore_errors: true
+      register: result
+
+    - assert:
+        that:
+          - result is failed
+          - "result.msg == 'Failed to POST secret/ping: Not Found (HTTP 404)'"
+
+    - name: Delete the namespace
+      flowerysong.openbao.namespace:
+        path: subsumed
+        state: absent
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Fetch current namespaces
+      flowerysong.openbao.namespace_info:
+      register: result
+
+    - assert:
+        that:
+          - "'subsumed/' not in result.namespaces"
+  always:
+    - import_role:
+        name: setup_openbao_teardown

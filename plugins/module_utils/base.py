@@ -26,6 +26,7 @@ def openbao_argument_spec():
             fallback=(env_fallback, ['VAULT_TOKEN']),
             no_log=True,
         ),
+        namespace=dict(),
         http_agent=dict(type='str', default='ansible-httpget'),
         use_proxy=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
@@ -141,6 +142,8 @@ class OpenBaoClient:
         headers = {}
         if self.params.get('token'):
             headers['X-Vault-Token'] = self.params['token']
+        if self.params.get('namespace'):
+            headers['X-Vault-Namespace'] = self.params['namespace']
         if data:
             headers['Content-type'] = 'application/json'
 
