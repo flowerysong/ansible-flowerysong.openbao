@@ -1,0 +1,32 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Create a KV mount
+      flowerysong.openbao.engine:
+        path: secret
+        type: kv
+        options:
+          version: 1
+
+    - name: Create secret/ping
+      flowerysong.openbao.kv:
+        key: ping
+        value:
+          value: pong
+
+    - assert:
+        that:
+          - "lookup('flowerysong.openbao.read', 'secret/ping', **openbao_conf) == {'value': 'pong'}"
+          - "lookup('flowerysong.openbao.read', 'secret/ping', raw=true, **openbao_conf).data == {'value': 'pong'}"
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

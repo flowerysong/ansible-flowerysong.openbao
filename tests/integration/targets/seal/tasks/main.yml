@@ -1,0 +1,101 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  block:
+    - name: Pretend to seal
+      flowerysong.openbao.seal:
+        state: sealed
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Seal
+      flowerysong.openbao.seal:
+        state: sealed
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Seal sealed OpenBao
+      flowerysong.openbao.seal:
+        state: sealed
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+
+    - name: Pretend to unseal
+      flowerysong.openbao.seal:
+        state: unsealed
+        key: "{{ item }}"
+      loop: "{{ openbao_unseal_keys }}"
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result.results | select('changed') | length == 5
+          - result.results.4.status.sealed
+
+    - name: Unseal
+      flowerysong.openbao.seal:
+        state: unsealed
+        key: "{{ item }}"
+      loop: "{{ openbao_unseal_keys }}"
+      register: result
+
+    - assert:
+        that:
+          - result.results | select('changed') | length == 2
+          - result.results.0.status.sealed
+          - result.results | selectattr('status.sealed') | length == 1
+
+    - name: Seal
+      flowerysong.openbao.seal:
+
+    - name: Unseal
+      flowerysong.openbao.seal:
+        state: unsealed
+        keys: "{{ openbao_unseal_keys }}"
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - not result.status.sealed
+
+    - name: Seal
+      flowerysong.openbao.seal:
+
+    - name: Progress unsealing
+      flowerysong.openbao.seal:
+        state: unsealed
+        key: "{{ openbao_unseal_keys.0 }}"
+      register: result
+
+    - assert:
+        that:
+          - result.status.progress == 1
+          - result.status.sealed
+
+    - name: Reset unsealing progress
+      flowerysong.openbao.seal:
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.status.progress == 0
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

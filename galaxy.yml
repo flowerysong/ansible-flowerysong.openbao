@@ -1,0 +1,19 @@
+namespace: flowerysong
+name: openbao
+version: 0.5.0
+
+authors:
+  - Paul Arthur <paul.arthur@flowerysong.com> (@flowerysong)
+
+tags:
+  - openbao
+
+readme: README.md
+license_file: LICENSE
+description: Plugins for interacting with OpenBao
+
+repository: https://github.com/flowerysong/ansible-flowerysong.openbao
+issues: https://github.com/flowerysong/ansible-flowerysong.openbao/issues
+
+build_ignore:
+  - update-meta.py

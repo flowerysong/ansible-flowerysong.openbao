@@ -1,0 +1,7 @@
+- name: Get OpenBao PID
+  ansible.builtin.slurp:
+    src: "{{ output_dir }}/bao.pid"
+  register: result
+
+- name: Kill OpenBao server
+  ansible.builtin.command: kill {{ result.content | b64decode }}

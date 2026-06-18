@@ -1,0 +1,48 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Create a KV mount
+      flowerysong.openbao.engine:
+        path: secret
+        type: kv
+        options:
+          version: 1
+
+    - name: Create some secrets
+      flowerysong.openbao.kv:
+        key: "{{ item }}"
+        value:
+          value: pong
+      loop:
+        - ping
+        - ping/pong
+
+    - vars:
+        cooked_res: "{{ q('flowerysong.openbao.list', 'secret/', **openbao_conf) }}"
+        raw_res: "{{ q('flowerysong.openbao.list', 'secret/', raw=True, **openbao_conf) }}"
+      block:
+        - name: Cooked results
+          debug:
+            msg: "{{ cooked_res }}"
+
+        - name: Raw results
+          debug:
+            msg: "{{ raw_res }}"
+
+        - assert:
+            that:
+              - cooked_res == ['ping', 'ping/']
+              - raw_res | length == 1
+              - raw_res.0.data['keys'] == ['ping', 'ping/']
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

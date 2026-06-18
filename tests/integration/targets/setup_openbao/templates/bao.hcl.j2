@@ -1,0 +1,27 @@
+storage "inmem" {}
+
+listener "tcp" {
+    address     = "127.0.0.1:{{ openbao_port }}"
+    tls_disable = true
+}
+
+log_level     = "Debug"
+pid_file      = "{{ output_dir }}/bao.pid"
+
+plugin_directory = "{{ output_dir }}"
+plugin_auto_download = true
+plugin_auto_register = true
+
+plugin "auth" "aws" {
+    image       = "ghcr.io/openbao/openbao-plugin-auth-aws"
+    version     = "v0.1.1"
+    binary_name = "openbao-plugin-auth-aws"
+    sha256sum   = "7a77057e62973c1aae6035f52110e3302605a47b622756d954915b7b55eca10c"
+}
+
+plugin "secret" "aws" {
+    image       = "ghcr.io/openbao/openbao-plugin-secrets-aws"
+    version     = "v0.3.0-beta20260326"
+    binary_name = "openbao-plugin-secrets-aws"
+    sha256sum   = "9aaa8f2597f1bfa98a727a6230d9c7f62f096e1d25607fab3a9f9cc8ce48af7a"
+}

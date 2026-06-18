@@ -1,0 +1,27 @@
+action_groups:
+  openbao:
+  - flowerysong.openbao.approle_role
+  - flowerysong.openbao.approle_secret_id
+  - flowerysong.openbao.auth_approle
+  - flowerysong.openbao.auth_method
+  - flowerysong.openbao.auth_method_info
+  - flowerysong.openbao.aws_auth_role
+  - flowerysong.openbao.aws_secret_role_iam
+  - flowerysong.openbao.aws_secret_role_sts
+  - flowerysong.openbao.delete
+  - flowerysong.openbao.engine
+  - flowerysong.openbao.engine_info
+  - flowerysong.openbao.init
+  - flowerysong.openbao.kv
+  - flowerysong.openbao.kv_v2
+  - flowerysong.openbao.ldap_config
+  - flowerysong.openbao.ldap_group
+  - flowerysong.openbao.ldap_user
+  - flowerysong.openbao.list
+  - flowerysong.openbao.policy
+  - flowerysong.openbao.policy_info
+  - flowerysong.openbao.read
+  - flowerysong.openbao.seal
+  - flowerysong.openbao.ssh_role
+  - flowerysong.openbao.write
+requires_ansible: '>=2.11'

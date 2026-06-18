@@ -1,0 +1,41 @@
+- import_role:
+    name: setup_openbao
+  vars:
+    openbao_init: false
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+  block:
+    - name: Pretend to initialize OpenBao
+      flowerysong.openbao.init:
+      check_mode: true
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Initialize OpenBao
+      flowerysong.openbao.init:
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.initialized == true
+          - "'root_token' in result"
+          - "'keys' in result"
+          - "'keys_base64' in result"
+
+    - name: Try to reinitialize OpenBao
+      flowerysong.openbao.init:
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result.initialized == true
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

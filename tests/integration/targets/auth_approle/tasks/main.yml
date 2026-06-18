@@ -1,0 +1,85 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+  block:
+    - name: Create the approle mount
+      flowerysong.openbao.auth_method:
+        path: approle
+        type: approle
+
+    - name: Create a role
+      flowerysong.openbao.approle_role:
+        name: testrole
+      register: role_result
+
+    - name: Create a SecretID
+      flowerysong.openbao.approle_secret_id:
+        role_name: testrole
+        metadata:
+          foo: bar
+      register: sid_result
+
+    - name: Authenticate with testrole using the lookup
+      set_fact:
+        auth_res: "{{ lookup('flowerysong.openbao.auth_approle', role_result.role.role_id, secret_id=sid_result.secret_id.secret_id, **openbao_conf) }}"
+
+    - name: Fetch token info
+      flowerysong.openbao.read:
+        token: "{{ auth_res }}"
+        path: auth/token/lookup-self
+      register: result
+
+    - assert:
+        that:
+          - result.result.data.display_name == 'approle'
+          - result.result.data.meta.role_name == 'testrole'
+          - result.result.data.meta.foo == 'bar'
+
+    - name: Authenticate with testrole using the module
+      flowerysong.openbao.auth_approle:
+        role_id: "{{ role_result.role.role_id }}"
+        secret_id: "{{ sid_result.secret_id.secret_id }}"
+      check_mode: "{{ item == 0 }}"
+      loop: [0, 1]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is skipped
+          - result.results.1 is changed
+          - "'client_token' in result.results.1.auth"
+          - "'accessor' in result.results.1.auth"
+          - result.results.1.auth.metadata.role_name == 'testrole'
+          - result.results.1.auth.metadata.foo == 'bar'
+
+    - name: Create an unbound role
+      flowerysong.openbao.approle_role:
+        name: testrole2
+        bind_secret_id: false
+        secret_id_bound_cidrs: 127.0.0.1/32
+      register: role_result
+
+    - name: Authenticate with testrole2 using the lookup
+      set_fact:
+        auth_res: "{{ lookup('flowerysong.openbao.auth_approle', role_result.role.role_id, **openbao_conf) }}"
+
+    - name: Authenticate with testrole2 using the module
+      flowerysong.openbao.auth_approle:
+        role_id: "{{ role_result.role.role_id }}"
+      check_mode: "{{ item == 0 }}"
+      loop: [0, 1]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is skipped
+          - result.results.1 is changed
+
+    - import_role:
+        name: setup_openbao_teardown

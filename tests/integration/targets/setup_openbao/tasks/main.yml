@@ -1,0 +1,54 @@
+- name: Fetch OpenBao tarball
+  ansible.builtin.get_url:
+    url: https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}/bao_{{ openbao_version }}_{{ test_platform }}_{{ test_arch }}.tar.gz
+    # FIXME: This is a bit hacky
+    dest: "{{ output_dir }}/../bao.tar.gz"
+
+- name: Extract OpenBao tarball
+  ansible.builtin.unarchive:
+    src: "{{ output_dir }}/../bao.tar.gz"
+    dest: "{{ output_dir }}/.."
+
+- name: Configure OpenBao
+  ansible.builtin.template:
+    src: bao.hcl.j2
+    dest: "{{ output_dir }}/bao.hcl"
+
+- name: Run OpenBao
+  ansible.builtin.shell: "{{ output_dir }}/../bao server -config {{ output_dir }}/bao.hcl > {{ output_dir }}/bao.log 2>&1"
+  async: 300
+  poll: 0
+
+- name: Wait for OpenBao to be available
+  ansible.builtin.wait_for:
+    port: "{{ openbao_port }}"
+
+- when: openbao_init
+  block:
+    - name: Initialize OpenBao
+      flowerysong.openbao.init:
+        openbao_addr: "{{ openbao_addr }}"
+        secret_shares: 5
+        secret_threshold: 2
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: Save the secrets
+      set_fact:
+        openbao_root_token: "{{ result.root_token }}"
+        openbao_unseal_keys: "{{ result['keys'] }}"
+
+    - name: Unseal
+      flowerysong.openbao.seal:
+        openbao_addr: "{{ openbao_addr }}"
+        state: unsealed
+        keys: "{{ openbao_unseal_keys }}"
+  rescue:
+    - import_role:
+        name: setup_openbao_teardown
+
+    - fail:
+        msg: bao init failed

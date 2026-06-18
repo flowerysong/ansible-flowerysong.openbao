@@ -1,0 +1,47 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Create the KV mounts
+      flowerysong.openbao.engine:
+        path: "{{ item }}"
+        type: kv
+        options:
+          version: 2
+      loop:
+        - secret
+        - terces
+
+    - name: Create secrets
+      flowerysong.openbao.kv_v2:
+        key: "{{ item.path }}"
+        value: "{{ item.data }}"
+        mount_point: "{{ item.mount | default(omit) }}"
+      loop:
+        - path: ping
+          data:
+            value: penguin
+        - path: ping
+          data:
+            value: pong
+        - mount: terces
+          path: ping
+          data:
+            value: gnop
+
+    - assert:
+        that:
+          - "lookup('flowerysong.openbao.kv_v2', 'ping', **openbao_conf) == {'value': 'pong'}"
+          - "lookup('flowerysong.openbao.kv_v2', 'ping', version=1, **openbao_conf) == {'value': 'penguin'}"
+          - "lookup('flowerysong.openbao.kv_v2', 'ping', mount_point='terces', **openbao_conf) == {'value': 'gnop'}"
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

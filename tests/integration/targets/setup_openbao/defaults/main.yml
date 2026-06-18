@@ -1,0 +1,6 @@
+openbao_version: 2.5.5
+test_platform: Linux
+test_arch: x86_64
+openbao_port: 18200
+openbao_addr: http://127.0.0.1:{{ openbao_port }}
+openbao_init: true
