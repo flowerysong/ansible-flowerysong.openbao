@@ -1,0 +1,60 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Create an OIDC mount
+      flowerysong.openbao.auth_method:
+        path: oidc
+        type: jwt
+
+    - name: Configure the mount
+      flowerysong.openbao.jwt_config:
+        mount_point: oidc
+        oidc_discovery_url: 'https://auth.example.com/'
+        oidc_client_id: totallyrealclient
+        oidc_client_secret: like_yeahman
+        skip_jwks_validation: true
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+    - name: Reconfigure the mount
+      flowerysong.openbao.jwt_config:
+        mount_point: oidc
+        oidc_discovery_url: 'https://auth.example.com/'
+        oidc_client_id: totallyrealclient
+        oidc_client_secret: like_yeahman
+        skip_jwks_validation: true
+        oidc_response_mode: form_post
+        oidc_response_types:
+          - code
+          - id_token
+        bound_issuer: god
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

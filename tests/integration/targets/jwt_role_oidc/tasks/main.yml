@@ -1,0 +1,83 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Create a JWT mount
+      flowerysong.openbao.auth_method:
+        path: oidc
+        type: jwt
+
+    - name: Create a role
+      flowerysong.openbao.jwt_role_oidc:
+        name: testrole
+        user_claim: preferred_username
+        allowed_redirect_uris: "https://vault.example.com/ui/vault/auth/oidc/oidc/callback"
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+    - name: Modify a role
+      flowerysong.openbao.jwt_role_oidc:
+        name: testrole
+        user_claim: preferred_username
+        allowed_redirect_uris: "https://vault.example.com/ui/vault/auth/oidc/oidc/callback"
+        groups_claim: preferred_groups
+        oidc_scopes:
+          - profile
+          - email
+        verbose_oidc_logging: true
+        bound_audiences: "https://login.example.com/"
+        bound_claims:
+          foo: bar
+        claim_mappings:
+          group: group
+          dept: department
+        bound_claims_type: glob
+        bound_subject: shibari
+        max_age: 600
+        oidc_disable_confirmation: true
+        poll_interval: 15
+        user_claim_json_pointer: true
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+    - name: Delete a role
+      flowerysong.openbao.jwt_role_oidc:
+        name: testrole
+        state: absent
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

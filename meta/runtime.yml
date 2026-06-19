@@ -12,6 +12,8 @@ action_groups:
   - flowerysong.openbao.engine
   - flowerysong.openbao.engine_info
   - flowerysong.openbao.init
+  - flowerysong.openbao.jwt_config
+  - flowerysong.openbao.jwt_role_oidc
   - flowerysong.openbao.kv
   - flowerysong.openbao.kv_v2
   - flowerysong.openbao.ldap_config
