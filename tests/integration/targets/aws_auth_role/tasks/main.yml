@@ -17,6 +17,19 @@
         - aws
         - aws-also
 
+    - name: Attempt to set an invalid plugin version on one of the mounts
+      flowerysong.openbao.auth_method:
+        path: aws-also
+        type: aws
+        plugin_version: v99.0.0
+      ignore_errors: true
+      register: result
+
+    - assert:
+        that:
+          - result is failed
+          - "result.result.errors.0 == 'plugin not found in the catalog: aws, version=v99.0.0'"
+
     - name: Create a role
       flowerysong.openbao.aws_auth_role:
         name: testrole

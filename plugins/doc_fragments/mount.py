@@ -41,7 +41,7 @@ options:
       - Semantic version of the plugin to use, e.g. "v1.0.0"
       - If blank the engine will select a registered unversioned plugin, the
         best registered versioned plugin, or a built-in plugin (in that order
-        of precendence.)
+        of precedence.)
     type: str
     default: ''
   options:

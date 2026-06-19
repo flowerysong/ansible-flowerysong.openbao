@@ -76,7 +76,7 @@ class OpenBaoMountModule:
         payload = {
             'options': {},
         }
-        for key in ('type', 'description', 'local', 'seal_wrap'):
+        for key in ('type', 'description', 'local', 'seal_wrap', 'plugin_version'):
             payload[key] = self.params[key]
 
         for key in self.config_spec.keys():
@@ -101,6 +101,13 @@ class OpenBaoMountModule:
                 mount = self._get_mount(path)
         else:
             diff = openbao_compare(mount, payload, ignore_keys=['accessor', 'deprecation_status', 'running_plugin_version', 'running_sha256', 'uuid'])
+
+            # FIXME: OpenBao will reject attempts to tune to an empty version
+            # with a somewhat obtuse error. Should we be nicer about handling
+            # the case where mount['plugin_version'] is set?
+            if not payload['plugin_version'] and not mount['plugin_version']:
+                payload.pop('plugin_version')
+
             if diff:
                 changed = True
 
