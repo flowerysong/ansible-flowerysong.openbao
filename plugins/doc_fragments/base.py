@@ -15,7 +15,7 @@ options:
     default: https://localhost:8200
   namespace:
     description:
-      - OpenBao namespace to operate within. If not specified, operations are performed in the root namespace.
+      - OpenBao namespace in which to operate. If not specified, operations are performed in the root namespace.
     type: str
   http_agent:
     description:

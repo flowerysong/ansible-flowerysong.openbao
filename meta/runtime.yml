@@ -11,6 +11,9 @@ action_groups:
   - flowerysong.openbao.delete
   - flowerysong.openbao.engine
   - flowerysong.openbao.engine_info
+  - flowerysong.openbao.group_alias
+  - flowerysong.openbao.group_external
+  - flowerysong.openbao.group_internal
   - flowerysong.openbao.init
   - flowerysong.openbao.jwt_config
   - flowerysong.openbao.jwt_role_oidc
