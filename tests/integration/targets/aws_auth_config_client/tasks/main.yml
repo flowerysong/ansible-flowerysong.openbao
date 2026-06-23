@@ -1,0 +1,55 @@
+- import_role:
+    name: setup_openbao
+
+- environment:
+    VAULT_ADDR: "{{ openbao_addr }}"
+    VAULT_TOKEN: "{{ openbao_root_token }}"
+  vars:
+    openbao_conf:
+      openbao_addr: "{{ openbao_addr }}"
+      token: "{{ openbao_root_token }}"
+  block:
+    - name: Create an AWS mount
+      flowerysong.openbao.auth_method:
+        path: aws
+        type: aws
+
+    - name: Configure the mount
+      flowerysong.openbao.aws_auth_config_client:
+        access_key: foo
+        secret_key: bar
+        endpoint: https://ec2.example.com/
+        iam_endpoint: https://iam.example.com/
+        sts_endpoint: https://sts.example.com/
+        use_sts_region_from_client: false
+        iam_server_id_header_value: letmein
+        allowed_sts_header_values:
+          - X-Change
+          - X-Men
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+    - name: Reconfigure the mount
+      flowerysong.openbao.aws_auth_config_client:
+      check_mode: "{{ item % 2 == 0 }}"
+      loop: [0, 1, 2, 3]
+      register: result
+
+    - assert:
+        that:
+          - result.results.0 is changed
+          - result.results.1 is changed
+          - result.results.2 is not changed
+          - result.results.3 is not changed
+
+  always:
+    - import_role:
+        name: setup_openbao_teardown

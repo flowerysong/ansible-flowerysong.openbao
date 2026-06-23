@@ -5,6 +5,7 @@ action_groups:
   - flowerysong.openbao.auth_approle
   - flowerysong.openbao.auth_method
   - flowerysong.openbao.auth_method_info
+  - flowerysong.openbao.aws_auth_config_client
   - flowerysong.openbao.aws_auth_role
   - flowerysong.openbao.aws_secret_role_iam
   - flowerysong.openbao.aws_secret_role_sts
